@@ -2,8 +2,7 @@ require 'lib/player'
 require 'lib/lastfm'
 
 # ID3 tagging:
-require 'id3lib'
-require 'iconv'
+require 'mp3info'
 
 # Banlists:
 require 'yaml'
@@ -98,16 +97,12 @@ class Manager
     end
 
     def tag(file)
-      tag = ID3Lib::Tag.new(file)
-
-      # FIXME: Get the ID3 library fixed and use UTF-8/16 as needed.
-      Iconv.open('iso8859-1', 'utf-8') do |ic|
-        tag.artist = ic.iconv(@track.artist)
-        tag.album  = ic.iconv(@track.album)
-        tag.title  = ic.iconv(@track.title)
+      Mp3Info.open(file, :encoding => 'utf-8') do |mp3|
+        mp3.removetag1
+        mp3.tag2.TPE1 = @track.artist
+        mp3.tag2.TALB = @track.album
+        mp3.tag2.TIT2 = @track.title
       end
-
-      tag.update!
     end
   end
 

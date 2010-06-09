@@ -1,0 +1,161 @@
+DISCLAIMER
+----------
+
+This program caches all downloaded songs on the local hard drive.
+This probably goes against the Last.fm terms of use, although I can't
+seem to find them anywhere.
+
+My request to users of this program:
+
+Please don't abuse this client to populate your MP3 library.
+
+  My intent in writing this program is NOT to allow users to get a
+  massive free library of music they can listen to at their leisure, but
+  rather, to make CORRECT usage of Last.fm painless and fun compared to
+  direct streaming.
+
+Please don't abuse this client to play songs on demand.
+
+  Last.fm's radio license (as I understand it) has conditions on how
+  frequently an artist can be played.  Please abide by the playlist
+  generator's choices as to what it thinks you should listen to next.
+
+Please be discreet if you violate these requests.
+
+  If you're going to violate the ethics (and possibly the terms and
+  conditions) of Last.fm, please keep it to yourself.  Advertising
+  your abuse will only make said abuse socially acceptable, and thus
+  contribute to other people abusing the system as well.
+
+  Last.fm provides a fantastic service, but if that service sees high
+  levels of blatant abuse, they could potentially be forced to move
+  to a closed-source proprietary protocol, rending this and all other
+  free clients unusable.
+
+  In short, I don't want to be the one to poison the water-hole by
+  making a better way to drink from it.
+
+On a technical note, the repository this client creates will get very
+large, and there is currently NO code to expunge old files from the
+library.  Don't run this without many gigabytes of free disk space.
+
+All other standard GPL disclaimers apply.
+
+
+LICENSE
+-------
+
+I am tentatively releasing this code under the GNU GPL, version 3 or
+later.  I don't do a lot of software releases, so this may be changed
+depending on feedback and further thought.
+
+If you want to submit code patches, please mention what license(s) you
+would be willing to release them under.
+
+
+SETUP
+-----
+
+Most of this will eventually be automated.
+
+1. Create required directories:
+
+     mkdir -vp ~/.cache-fm/cache ~/.cache-fm/mpd/playlists
+
+2. Set up and start your MPD.
+
+   A sample configuration is provided in the 'examples' directory.
+   You can copy that to ~/.mpdconf and change the paths.
+
+3. Set up and start mpdscribble.
+
+   A sample configuration is provided in the 'examples' directory.
+   You can copy that to ~/.mpdscribble/mpdscribble.conf and change
+   the paths.
+
+4. Get your login credentials into the bin/play.rb file.
+
+   If you have shell-fm set up, you can (hopefully) skip this step,
+   because the script should read your shell-fm.rc file.
+
+   If not, uncomment the line near the top and replace the content of
+   the strings.  To get the MD5 of your password, run this:
+
+     echo -n 'your password' | md5sum
+
+
+USAGE
+-----
+
+cache-fm is still lacking a UI, but here's a basic guide to usage.
+
+1. Run irb, the interactive Ruby interpreter:
+
+     irb -rbin/play
+
+2. At the prompt, run
+
+     play "uri"
+
+   Where "uri" is a Last.fm URL, the kind accepted by shell-fm.
+   Examples include "artist/future funk squad", "globaltags/ambient",
+   "user/xxx/playlist", etc.
+
+Various status messages will come up as the program operates.  Most
+should be self-explanatory.
+
+Note that when cache-fm says "download stopped", it means it will no
+longer download new playlists.  It will always continue to fetch the
+current playlist until done, or else the download ticket would expire.
+
+
+COMMANDS
+--------
+
+play "uri"
+
+    Tunes to a new station.  Use this to begin playing on startup.
+
+    After startup, this will abort the current fetch and clear the list
+    of pending tracks to download, so it should begin fetching the new
+    station immediately.  (Untested.)
+
+status
+    Gives an overview of the queue status.  '##' indicates the
+    currently-fetching track, while '<<' and '>>' indicate prior and
+    upcoming tracks, respectively.
+
+    Percentages indicate completion.  These should always be 100% for
+    prior tracks, 0% or 100% for upcoming tracks, and anything for
+    fetching tracks.
+
+$m.fetching.abort_fetch
+
+    Aborts fetching the current track.  The track will simply vanish
+    from the list, since failed downloads are discarded.
+
+
+KNOWN BUGS
+----------
+
+Status messages interfere with the "irb" prompt.  If this bugs you,
+run irb with --noprompt.
+
+The only supported metadata encoding is ISO8859-1 right now, and
+attempting to play tracks with non-Latin1 (e.g. Asian) characters in
+the artist / album / title will likely cause an exception.  There's
+not much I can do about this at the moment, since the current state of
+ID3 tagging libraries is pretty crappy.  I'm working on a Ruby binding
+to libid3tag, which ought to solve this.
+
+Old tracks are not currently expunged from either the internal
+playlist or the MPD playlist.  If left running indefinitely, memory
+costs could get prohibitive.  I have no idea how long this would take,
+but I imagine "rapid-tag" mode (see manager.rb comments) would become
+a problem much faster.
+
+If a fetch is aborted, a tempfile (1234.mp3.tmp) is left lying around.
+It will simply be overwritten the next time the client tries to
+download that track.  Maybe someday the client will support resuming a
+partial download, but for now, you may want to occasionally delete
+*.tmp when the client is not actively downloading a track.

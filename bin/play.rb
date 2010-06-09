@@ -24,7 +24,7 @@ def play(uri)
     $l.tune_to(uri)
   end
 
-  $p = Player.new
+  $p = Player.create
   $m = Manager.new($l, $p)
 
   $p.connect

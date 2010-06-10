@@ -2,7 +2,7 @@ class Player::MPD < Player
   def self.available?
     begin
       require 'rubygems'
-      require 'rbosa'
+      require 'librmpd'
       true
     rescue LoadError
       false
@@ -15,13 +15,13 @@ class Player::MPD < Player
     @remain_last = -1
     @remain_current = @remain_future = 0
 
-    @mpd = MPD.new
+    @mpd = ::MPD.new
 
     methods = self.private_methods - Object.private_instance_methods
     for name in methods do
       next unless name =~ /_callback$/
 
-      num = MPD.const_get(name.upcase)
+      num = ::MPD.const_get(name.upcase)
       @mpd.register_callback(self.method(name), num)
     end
   end

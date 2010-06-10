@@ -129,7 +129,7 @@ status
     prior tracks, 0% or 100% for upcoming tracks, and anything for
     fetching tracks.
 
-$m.fetching.abort_fetch
+abort
 
     Aborts fetching the current track.  The track will simply vanish
     from the list, since failed downloads are discarded.

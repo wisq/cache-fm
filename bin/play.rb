@@ -48,6 +48,16 @@ def status
   puts "-- Time remaining:  #{$p.time_remaining} seconds"
 end
 
+def abort
+  if $m.fetching then
+    track = $m.fetching.track
+    puts "Aborting download:  #{track.artist} -- #{track.title}"
+    $m.fetching.abort_fetch
+  else
+    puts 'No download in progress.'
+  end
+end
+
 def shellfm_login_info
   config = Hash.new
   File.open("#{ENV['HOME']}/.shell-fm/shell-fm.rc") do |fh|

@@ -1,9 +1,40 @@
-DISCLAIMER
-----------
+PURPOSE
+-------
+
+When you play Last.fm the "proper" way, you stream content directly
+from the Last.fm webservers to your speakers.  The music is never
+stored locally.
+
+This has a few advantages, but also several disadvantages.  You're
+wasting a lot of bandwidth by downloading the same songs over and
+over.  If you have any connectivity issues, your sound will stutter or
+stop.  Your connection has to be faster than the bitrate of the song.
+And some Last.fm songs actually exceed the maximum bitrate their
+servers will stream at, meaning they will stutter even with a perfect
+connection.
+
+cache-fm addresses all these concerns by downloading the songs to the
+hard drive and ensuring they are fully ready to play before it begins.
+It integrates with either MPD or iTunes (Mac only) and uses them to
+play the actual songs.
+
+In short, you get the same user interface(s) and benefits you're
+already used to, but the music comes from Last.fm, and you never have
+to hear network stutters again.
+
+
+LICENSE
+-------
+
+See COPYING for details.
+
+
+CAVEATS
+-------
 
 This program caches all downloaded songs on the local hard drive.
-This probably goes against the Last.fm terms of use, although I can't
-seem to find them anywhere.
+This is not the standard Last.fm approach, and might be a violation of
+the terms of use, but I can't seem to find any relevant clauses.
 
 My request to users of this program:
 
@@ -29,7 +60,7 @@ Please be discreet if you violate these requests.
 
   Last.fm provides a fantastic service, but if that service sees high
   levels of blatant abuse, they could potentially be forced to move
-  to a closed-source proprietary protocol, rending this and all other
+  to a closed-source proprietary protocol, rendering this and all other
   free clients unusable.
 
   In short, I don't want to be the one to poison the water-hole by
@@ -39,41 +70,25 @@ On a technical note, the repository this client creates will get very
 large, and there is currently NO code to expunge old files from the
 library.  Don't run this without many gigabytes of free disk space.
 
-All other standard GPL disclaimers apply.
+The iTunes integration will add a lot of songs to your iTunes music
+library, and there's currently no easy means to identify and remove
+these songs.  If you have a normal music library, you might not
+appreciate having hundreds of Last.fm tracks mixed in.  I'm not aware
+of a convenient solution at this point.
 
 
-LICENSE
--------
-
-I am tentatively releasing this code under the GNU GPL, version 3 or
-later.  I don't do a lot of software releases, so this may be changed
-depending on feedback and further thought.
-
-If you want to submit code patches, please mention what license(s) you
-would be willing to release them under.
-
-
-SETUP
+SETUP (common)
 -----
 
-Most of this will eventually be automated.
+1. Install required gems:
 
-1. Create required directories:
+     gem install ruby-mp3info
 
-     mkdir -vp ~/.cache-fm/cache ~/.cache-fm/mpd/playlists
+2. Create cache directory:
 
-2. Set up and start your MPD.
+     mkdir -vp ~/.cache-fm/cache
 
-   A sample configuration is provided in the 'examples' directory.
-   You can copy that to ~/.mpdconf and change the paths.
-
-3. Set up and start mpdscribble.
-
-   A sample configuration is provided in the 'examples' directory.
-   You can copy that to ~/.mpdscribble/mpdscribble.conf and change
-   the paths.
-
-4. Get your login credentials into the bin/play.rb file.
+3. Get your login credentials into the bin/play.rb file.
 
    If you have shell-fm set up, you can (hopefully) skip this step,
    because the script should read your shell-fm.rc file.
@@ -84,12 +99,66 @@ Most of this will eventually be automated.
      echo -n 'your password' | md5sum
 
 
+SETUP (MPD)
+-----
+
+4. Install librmpd:
+
+     gem install librmpd
+
+5. Set up and start your MPD.
+
+   A sample configuration is provided in the 'examples' directory.
+   You can copy that to ~/.mpdconf and change the paths.
+
+   If you use the sample config, you'll have to create an MPD
+   playlists directory or else MPD will not start:
+
+     mkdir -vp ~/.cache-fm/mpd/playlists
+
+6. Set up and start mpdscribble. (optional)
+
+   cache-fm is only concerned with delivering the songs to MPD, not
+   recording (scrobbling) the songs you choose to play.  In order to
+   do the latter, you will need mpdscribble.
+
+   A sample configuration is provided in the 'examples' directory.
+   You can copy that to ~/.mpdscribble/mpdscribble.conf and change
+   the paths.
+
+
+SETUP (iTunes for Mac)
+-----
+
+4. Install the Ruby OSA bindings:
+
+     gem install rubyosa
+
+5. Create a playlist named "Last.fm" in iTunes.
+
+   This playlist will serve as your queue.  Feel free to remove tracks
+   from this list once they are no longer needed.
+
+6. Disable "Copy files to iTunes Media folder ..."  (optional)
+
+   This option is located on the "Advanced" preferences tab.  There's
+   really no need to be making duplicates of every cache-fm file you
+   play, and leaving them in the cache-fm directory makes them easier
+   to keep track of.
+
+7. Install the Last.fm client for Mac. (optional)
+
+   The Last.fm client comes with the ability to scrobble the songs
+   you play on iTunes so that they appear in your Last.fm history.
+   You won't be using the Last.fm client to actually play any music.
+
+
 USAGE
 -----
 
 cache-fm is still lacking a UI, but here's a basic guide to usage.
 
-1. Run irb, the interactive Ruby interpreter:
+1. Run IRB, the interactive Ruby interpreter:
 
      irb -rbin/play
 
@@ -106,7 +175,7 @@ should be self-explanatory.
 
 Note that when cache-fm says "download stopped", it means it will no
 longer download new playlists.  It will always continue to fetch the
-current playlist until done, or else the download ticket would expire.
+current playlist until done.
 
 
 COMMANDS
@@ -135,21 +204,39 @@ abort
     from the list, since failed downloads are discarded.
 
 
-KNOWN BUGS
-----------
+READLINE BUG (Mac only(?))
+------------
 
-Status messages interfere with the "irb" prompt.  If this bugs you,
-run irb with --noprompt.
+   If you experience weird problems, such as cache-fm just stalling
+   outright and refusing to do anything, you may have a blocking
+   Readline (such as Mac's EditLine) that is preventing the worker
+   threads from doing their thing.
 
-The only supported metadata encoding is ISO8859-1 right now, and
-attempting to play tracks with non-Latin1 (e.g. Asian) characters in
-the artist / album / title will likely cause an exception.  There's
-not much I can do about this at the moment, since the current state of
-ID3 tagging libraries is pretty crappy.  I'm working on a Ruby binding
-to libid3tag, which ought to solve this.
+   A program is provided to test whether you have this problem:
+
+     irb -r examples/readline.rb
+
+   Don't type anything for at least five seconds.  If you see it count
+   to five and then exit, then either your Readline is non-blocking,
+   or IRB isn't using it at all.
+
+   If it just stalls instead, you will have to disable it.  The usual
+   way to do this is to put
+
+     IRB.conf[:USE_READLINE] = false
+
+   at the end of your ~/.irbrc, creating the file if necessary.
+   (This may not always work, depending on how your IRB is configured.)
+
+
+MISC BUGS
+---------
+
+Status messages interfere with the IRB prompt.  If this bothers you,
+run IRB with --noprompt.
 
 Old tracks are not currently expunged from either the internal
-playlist or the MPD playlist.  If left running indefinitely, memory
+playlist or the MPD/iTunes playlist.  If left running indefinitely, memory
 costs could get prohibitive.  I have no idea how long this would take,
 but I imagine "rapid-tag" mode (see manager.rb comments) would become
 a problem much faster.

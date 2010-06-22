@@ -114,7 +114,7 @@ class Player::ITunes < Player
       if list.name == 'Last.fm' then
         current = @itunes.current_track
         index   = current.index
-        remain  = track_length(current) - @itunes.player_position
+        remain  = track_length(current, @itunes.player_position)
       else
         list = nil
       end
@@ -130,8 +130,20 @@ class Player::ITunes < Player
     send_event(EVENT_REMAIN, remain)
   end
 
-  def track_length(track)
-    mins, secs = track.time.split(':', 2).map(&:to_i)
-    mins * 60 + secs
+  def track_length(track, position = 0)
+    parts = track.time.split(':', 3)
+
+    total = 0
+    parts.reverse.each_with_index do |part, index|
+      # secs = 1, mins = 60, hours = 60*60
+      total += part.to_i * 60**index
+    end
+    
+    total -= position
+    
+    # Cap tracks at 10 minutes.
+    return 600 if total > 600
+    
+    return total
   end
 end

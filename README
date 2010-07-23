@@ -82,7 +82,8 @@ SETUP (common)
 
 1. Install required gems:
 
-     gem install ruby-mp3info
+     gem install bundler
+     bundle install
 
 2. Create cache directory:
 

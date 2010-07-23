@@ -47,6 +47,10 @@ class Player
     return @subscribers[event].delete(id)
   end
 
+  def starved?
+    return state == STATE_STARVED
+  end
+
   private
   def send_event(event, *args)
     for id, method in @subscribers[event] do

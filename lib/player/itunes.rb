@@ -104,26 +104,27 @@ class Player::ITunes < Player
 
   def poll_remaining
     remain = 0
-  
-    list  = nil
-    index = 0
+    unless starved?
+      list  = nil
+      index = 0
     
-    if playing? then
-      list = @itunes.current_playlist
+      if playing? then
+        list = @itunes.current_playlist
       
-      if list.name == 'Last.fm' then
-        current = @itunes.current_track
-        index   = current.index
-        remain  = track_length(current, @itunes.player_position)
-      else
-        list = nil
+        if list.name == 'Last.fm' then
+          current = @itunes.current_track
+          index   = current.index
+          remain  = track_length(current, @itunes.player_position)
+        else
+          list = nil
+        end
       end
-    end
     
-    list ||= lastfm_playlist
+      list ||= lastfm_playlist
     
-    for track in list.tracks.drop(index) do
-      remain += track_length(track)
+      for track in list.tracks.drop(index) do
+        remain += track_length(track)
+      end
     end
   
     @remain = remain

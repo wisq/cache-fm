@@ -9,6 +9,7 @@ require 'yaml'
 
 class Manager
   CACHE_DIR = ENV['HOME'] + '/.cache-fm/cache'
+  BANNED_FILE = 'banned.yml'
 
   class Entry
     attr_reader :track, :player_id
@@ -111,10 +112,7 @@ class Manager
 
   def initialize(lastfm, player)
     @banned = []
-    if File.exists? 'banned.yml' then
-      @banned = YAML.load_file('banned.yml')
-      puts "Loaded #{@banned.count} banned patterns."
-    end
+    load_banned if File.exists?(BANNED_FILE)
 
     @lastfm = lastfm
     @player = player
@@ -130,6 +128,11 @@ class Manager
     end
 
     @player.subscribe(Player::EVENT_REMAIN, self.method('event_remain'))
+  end
+
+  def load_banned
+    @banned = YAML.load_file(BANNED_FILE)
+    puts "Loaded #{@banned.count} banned patterns."
   end
 
   private
@@ -158,7 +161,7 @@ class Manager
 
       title = "#{entry.track.artist} -- #{entry.track.title}"
 
-      if is_banned(entry.track) then
+      if is_banned?(entry.track) then
         puts "Banned:      #{title}"
         next
       elsif entry.done? then
@@ -207,15 +210,12 @@ class Manager
   end
 
   private
-  def is_banned(track)
-    for artist, title in @banned do
-      if artist.nil? || artist === track.artist then
-        if title.nil? || title === track.title then
-          return true
-        end
+
+  def is_banned?(track)
+    @banned.any? do |entry|
+      entry.all? do |field, match|
+        match === track.send(field)
       end
     end
-
-    return false
   end
 end

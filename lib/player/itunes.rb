@@ -87,7 +87,11 @@ class Player::ITunes < Player
   def poll_state
     self.state = 
       if !playing? then
-        STATE_STARVED
+        case state
+        when STATE_PAUSED  then STATE_STOPPED
+        when STATE_STOPPED then STATE_STOPPED
+        else STATE_STARVED
+        end
       elsif @itunes.current_playlist.name != 'Last.fm' then
         STATE_UNKNOWN
       else

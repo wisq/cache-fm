@@ -80,10 +80,9 @@ of a convenient solution at this point.
 SETUP (common)
 -----
 
-1. Install required gems:
+1. Install bundler:
 
      gem install bundler
-     bundle install
 
 2. Create cache directory:
 
@@ -103,9 +102,9 @@ SETUP (common)
 SETUP (MPD)
 -----
 
-4. Install librmpd:
+4. Install MPD-based dependencies:
 
-     gem install librmpd
+     bundle install --without itunes
 
 5. Set up and start your MPD.
 
@@ -131,9 +130,9 @@ SETUP (MPD)
 SETUP (iTunes for Mac)
 -----
 
-4. Install the Ruby OSA bindings:
+4. Install the iTunes-based dependencies:
 
-     gem install rubyosa
+     bundle install --without mpd
 
 5. Create a playlist named "Last.fm" in iTunes.
 
@@ -147,11 +146,10 @@ SETUP (iTunes for Mac)
    play, and leaving them in the cache-fm directory makes them easier
    to keep track of.
 
-7. Install the Last.fm client for Mac. (optional)
+7. Install iScrobbler. (optional)
 
-   The Last.fm client comes with the ability to scrobble the songs
-   you play on iTunes so that they appear in your Last.fm history.
-   You won't be using the Last.fm client to actually play any music.
+   iScrobbler lets you scrobble the songs you play so that they appear
+   in your Last.fm history.
 
 
 USAGE

@@ -15,7 +15,12 @@ class Player::MPD < Player
     @remain_last = -1
     @remain_current = @remain_future = 0
 
-    @mpd = ::MPD.new
+    if host = ENV['MPD_HOST']
+      host, @password = host.split('@').reverse
+      @mpd = ::MPD.new(host)
+    else
+      @mpd = ::MPD.new
+    end
 
     methods = self.private_methods - Object.private_instance_methods
     for name in methods do
@@ -29,6 +34,7 @@ class Player::MPD < Player
   def connect
     Thread.abort_on_exception = true
     @mpd.connect(true)
+    @mpd.password(@password) if @password
 
     @state = STATE_WAITING
 

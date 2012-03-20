@@ -20,9 +20,7 @@ class LastFM
   end
 
   def self.connect(user, passhash)
-    sess = LastFM::Session.new
-    sess.username = user
-    sess.passhash = passhash
+    sess = LastFM::Session.new(user, passhash)
     sess.connect
     return sess
   end
@@ -87,6 +85,11 @@ class LastFM::Session
   PLAYLIST_URL = URI.parse('http://ws.audioscrobbler.com/radio/xspf.php').freeze
 
   include LastFM::HTTP
+
+  def initialize(user, passhash)
+    @username = user
+    @passhash = passhash
+  end
 
   def connect
     uri = http_uri(CONNECT_URL,

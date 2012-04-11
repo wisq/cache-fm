@@ -3,10 +3,8 @@
 $LOAD_PATH << File.dirname(__FILE__) + '/..'
 require 'lib/manager'
 
-if Object.const_defined(:Encoding)
-  Encoding.default_external = 'UTF-8'
-  Encoding.default_internal = 'UTF-8'
-end
+$stdout.sync = true
+$stderr.sync = true
 
 # This is a daemonised version for running
 # as a service via e.g. runit.
@@ -27,7 +25,7 @@ class CachefmService
   end
 
   def run
-    Signal.trap('HUP')  { tune_to_file }
+    Signal.trap('HUP')  { reload }
     Signal.trap('INT')  { abort_fetch }
     Signal.trap('USR1') { show_status }
 
@@ -38,6 +36,11 @@ class CachefmService
     loop { sleep }
   end
 
+  def reload
+    @manager.load_banned
+    tune_to_file
+  end
+
   def tune_to_file
     station = File.open(@station_file, &:readline).chomp
     if station != @station
@@ -45,6 +48,7 @@ class CachefmService
       @lastfm.tune_to(station)
       @manager.pending.clear
       puts "Tuned."
+      @station = station
     else
       puts "Already tuned to #{station.inspect}."
     end
@@ -52,30 +56,35 @@ class CachefmService
 
   def show_status
     lists = [
-      ['<<',  $m.playlist.last(10)],
-      ['##', [$m.fetching]],
-      ['>>',  $m.pending],
+      ['<<',  @manager.playlist.last(10)],
+      ['##', [@manager.fetching]],
+      ['>>',  @manager.pending],
     ]
 
     for prefix, list in lists do
       for e in list do
-        next if e.nil? # $m.fetching nil
+        next if e.nil? # @manager.fetching nil
         percent = sprintf('%3d%%', e.percent_done)
         puts "#{prefix} #{percent}: #{e.track.artist} -- #{e.track.title}"
       end
     end
-    puts "-- Time remaining:  #{$p.time_remaining} seconds"
+    puts "-- Time remaining:  #{@player.time_remaining} seconds"
   end
 
   def abort_fetch
-    if $m.fetching then
-      track = $m.fetching.track
+    if @manager.fetching then
+      track = @manager.fetching.track
       puts "Aborting download:  #{track.artist} -- #{track.title}"
-      $m.fetching.abort_fetch
+      @manager.fetching.abort_fetch
     else
       puts 'No download in progress.'
     end
   end
 end
 
-CachefmService.new(ARGV.first).run
+puts "Starting up ..."
+begin
+  CachefmService.new(ARGV.first).run
+ensure
+  puts "Shutting down."
+end
